@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>System Dashboard</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Users</h3>
+        <p class="stat-value">{{ num_users }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Total Apps</h3>
+        <p class="stat-value">{{ num_apps }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Average Rating</h3>
+        <p class="stat-value">{{ avg_rating }}</p>
+    </div>
+</div>
+
+<h2>Apps by Category</h2>
+<div class="category-list">
+    {% for category, count in category_counts.items() %}
+    <div class="category-item">
+        <span class="cat-name">{{ category }}</span>
+        <span class="cat-count">{{ count }}</span>
+        <div class="progress-bar">
+            <div class="progress" style="width: {{ (count / num_apps) * 100 }}%"></div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

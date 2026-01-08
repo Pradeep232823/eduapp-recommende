@@ -323,53 +323,64 @@ footer {
     color: var(--gray);
     border-top: 1px solid #e5e7eb;
 }
-
 /* =========================
-   RESPONSIVE DESIGN
+   RESPONSIVE DESIGN (DESKTOP-LIKE)
    ========================= */
+
+/* Tablets */
 @media (max-width: 1024px) {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
+/* Mobile – KEEP DESKTOP STRUCTURE */
 @media (max-width: 768px) {
 
-    /* NAVBAR (clean mobile layout) */
+    /* NAVBAR */
     .nav-container {
         flex-direction: column;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
     }
 
     .logo {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
 
-    /* Keep nav links in one horizontal row */
     .nav-links {
         flex-direction: row;
         justify-content: center;
+        gap: 16px;
         width: 100%;
-        gap: 20px;
     }
 
     .nav-links a {
-        padding: 8px 12px;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        padding: 6px 10px;
     }
 
-    /* DASHBOARD */
+    /* DASHBOARD – KEEP 3 CARDS IN A ROW */
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
     }
 
-    /* APP CARDS */
+    .stat-card {
+        padding: 18px;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+    }
+
+    /* APP CARDS – 2 PER ROW */
     .app-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
     }
 
-    /* CATEGORY LIST */
+    /* CATEGORY LIST – SAME AS DESKTOP */
     .category-list {
         margin-left: 0;
         margin-right: 0;
@@ -377,29 +388,34 @@ footer {
     }
 
     .category-item {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
     }
 
     .cat-name {
-        width: 100%;
-        white-space: normal;
+        width: 180px;
+        white-space: nowrap;
+        font-size: 0.95rem;
     }
 
     /* BUTTONS */
     .btn {
-        width: 100%;
-        text-align: center;
+        width: auto;
     }
 }
 
+/* Small phones – ONLY font scaling */
 @media (max-width: 480px) {
 
     h1 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
 
     h2 {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
+    }
+
+    .stat-value {
+        font-size: 1.6rem;
     }
 }

@@ -21,22 +21,19 @@
 }
 
 /* =========================
-   GLOBAL LAYOUT FIX
+   GLOBAL
    ========================= */
 html, body {
     height: 100%;
 }
 
-/* Page wrapper for footer control */
-.page-wrapper {
+/* 🔥 GRID-BASED STICKY FOOTER (FINAL FIX) */
+.layout-root {
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
 }
 
-/* =========================
-   BODY
-   ========================= */
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--light);
@@ -78,7 +75,7 @@ nav {
 .nav-links {
     list-style: none;
     display: flex;
-    gap: 32px;
+    gap: 28px;
 }
 
 .nav-links a {
@@ -98,11 +95,7 @@ nav {
    MAIN CONTENT
    ========================= */
 .main-content {
-    flex: 1;                 /* 🔥 keeps footer at bottom */
-    padding: 60px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 50px;
+    padding: 50px 20px;
 }
 
 /* =========================
@@ -110,14 +103,30 @@ nav {
    ========================= */
 h1 {
     font-size: 2.2rem;
+    margin-bottom: 10px;
 }
 
 h2 {
     font-size: 1.6rem;
+    margin-bottom: 18px;
 }
 
 h3 {
     font-size: 1.2rem;
+}
+
+/* =========================
+   HERO
+   ========================= */
+.hero {
+    text-align: center;
+    padding: 40px 0;
+    margin-bottom: 40px;
+}
+
+.hero p {
+    margin-top: 10px;
+    color: var(--gray);
 }
 
 /* =========================
@@ -128,15 +137,15 @@ h3 {
     padding: 10px 22px;
     border-radius: 6px;
     font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
     border: none;
+    cursor: pointer;
+    text-decoration: none;
 }
 
 .btn-primary {
     background-color: var(--primary);
     color: var(--white);
-    margin-top:20px;
+    margin-top: 20px;
 }
 
 .btn-primary:hover {
@@ -153,25 +162,13 @@ h3 {
 }
 
 /* =========================
-   HERO
-   ========================= */
-.hero {
-    text-align: center;
-    padding: 40px 0;
-}
-
-.hero p {
-    margin-top: 10px;
-    color: var(--gray);
-}
-
-/* =========================
    APP GRID
    ========================= */
 .app-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 30px;
+    gap: 26px;
+    margin-top: 30px;
 }
 
 /* =========================
@@ -182,9 +179,6 @@ h3 {
     padding: 24px;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
     transition: transform 0.2s ease;
 }
 
@@ -214,11 +208,12 @@ h3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 30px;
+    margin: 30px 0 45px;
 }
 
 .stat-card {
     background: var(--white);
-    padding: 25px;
+    padding: 26px;
     border-radius: 8px;
     text-align: center;
 }
@@ -234,21 +229,29 @@ h3 {
    ========================= */
 .category-list {
     background: var(--white);
-    padding: 25px;
-    border-radius: 8px;
+    margin-left: -60px;
+    margin-right: -60px;
+    padding: 32px 48px;
+    border-radius: 10px;
+    margin-top: 24px;
 }
 
 .category-item {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 18px;
+    gap: 14px;
+    margin-bottom: 16px;
 }
 
+
 .cat-name {
-    width: 160px;
+    width: 50%;              /* increase width */
     font-weight: 600;
+    white-space: nowrap;       /* 🔥 prevents wrapping */
+    overflow: hidden;          /* hides overflow */
+    text-overflow: ellipsis;   /* shows ... if too long */
 }
+
 
 .cat-count {
     font-size: 0.9rem;
@@ -268,12 +271,13 @@ h3 {
 }
 
 /* =========================
-   FORMS
+   REVIEW / FORMS
    ========================= */
 .review-section {
     background: var(--white);
     padding: 30px;
     border-radius: 8px;
+    margin-top: 50px;
 }
 
 .review-form {
@@ -341,11 +345,6 @@ footer {
         gap: 10px;
     }
 
-    .main-content {
-        padding: 40px 15px;
-        gap: 40px;
-    }
-
     .stats-grid {
         grid-template-columns: 1fr;
     }
@@ -353,10 +352,18 @@ footer {
     .app-grid {
         grid-template-columns: 1fr;
     }
+    .category-list {
+        margin-left: 0;
+        margin-right: 0;
+        padding: 24px 20px;
+    }
 
     .category-item {
         flex-direction: column;
         align-items: flex-start;
+    }
+    .cat-name {
+        width: 100%;
     }
 
     .btn {

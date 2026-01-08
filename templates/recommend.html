@@ -4,7 +4,6 @@
 <h1>Explore Apps by Category</h1>
 <p>Select a category to view the best apps available.</p>
 
-<!-- Category Selection Form -->
 <form method="POST" class="search-form">
     <select name="category" required>
         <option value="">-- Select App Category --</option>
@@ -15,12 +14,9 @@
         {% endfor %}
     </select>
 
-    <button type="submit" class="btn btn-primary">
-        Show Apps
-    </button>
+    <button type="submit" class="btn btn-primary">Show Apps</button>
 </form>
 
-<!-- Recommendation Results -->
 {% if selected_category %}
 <h2>Available Apps in "{{ selected_category }}"</h2>
 
@@ -35,5 +31,4 @@
     {% endfor %}
 </div>
 {% endif %}
-
 {% endblock %}

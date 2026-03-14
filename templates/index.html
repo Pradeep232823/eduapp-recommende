@@ -67,24 +67,22 @@
                 {% if role == "user" %}
 
                     {% if app.in_wishlist %}
-                        <form method="POST"
-                            action="{{ url_for('remove_from_wishlist') }}">
-                            <input type="hidden"
-                                name="app_name"
-                                value="{{ app.app_name }}">
-                            <button type="submit"
-                                    class="btn btn-danger">
+                        <form method="POST" action="{{ url_for('remove_from_wishlist') }}">
+                            <input type="hidden" name="app_name" value="{{ app.app_name }}">
+                            <input type="hidden" name="app_id" value="{{ app.app_id }}">
+                            <input type="hidden" name="next_page" value="{{ request.full_path }}">
+
+                            <button type="submit" class="btn btn-danger">
                                 Remove from Wishlist
                             </button>
                         </form>
                     {% else %}
-                        <form method="POST"
-                            action="{{ url_for('add_to_wishlist') }}">
-                            <input type="hidden"
-                                name="app_name"
-                                value="{{ app.app_name }}">
-                            <button type="submit"
-                                    class="btn btn-secondary">
+                        <form method="POST" action="{{ url_for('add_to_wishlist') }}">
+                            <input type="hidden" name="app_name" value="{{ app.app_name }}">
+                            <input type="hidden" name="app_id" value="{{ app.app_id }}">
+                            <input type="hidden" name="next_page" value="{{ request.full_path }}">
+
+                            <button type="submit" class="btn btn-secondary">
                                 Add to Wishlist
                             </button>
                         </form>
@@ -141,12 +139,11 @@
             <section class="section-block review-form-box">
                 <h3>Give Your Review</h3>
 
-                <form method="POST"
-                      action="{{ url_for('add_review') }}">
+                <form method="POST" action="{{ url_for('add_review') }}">
 
-                    <input type="hidden"
-                           name="app_name"
-                           value="{{ app.app_name }}">
+                    <input type="hidden" name="app_name" value="{{ app.app_name }}">
+                    <input type="hidden" name="app_id" value="{{ app.app_id }}">
+                    <input type="hidden" name="next_page" value="{{ request.path }}">
 
                     <div class="form-group">
                         <label>Rating</label>
@@ -180,4 +177,32 @@
 
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Reopen modal
+    const params = new URLSearchParams(window.location.search);
+    const modalToOpen = params.get("open_modal");
+
+    if (modalToOpen) {
+        const modal = document.getElementById("modal-" + modalToOpen);
+        if (modal) {
+            modal.style.display = "block";
+        }
+    }
+
+    // Show toast
+    const toast = document.getElementById("toast");
+    if (toast) {
+        toast.classList.add("show");
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, 3000);
+    }
+
+});
+</script>
 {% endblock %}

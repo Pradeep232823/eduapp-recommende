@@ -30,25 +30,25 @@
                 <li><a href="{{ url_for('logout') }}">Logout</a></li>
 
             {% else %}
-                <li><a href="{{ url_for('landing') }}">Login</a></li>
+                {% if request.endpoint != 'landing' %}
+                    <li><a href="{{ url_for('landing') }}">Sign In</a></li>
+                {% endif %}
             {% endif %}
 
         </ul>
     </div>
 </nav>
 
+<!-- ✅ IMPROVED FLASH WITH CATEGORY SUPPORT -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div id="toast" class="toast {{ messages[0][0] }}">
+            {{ messages[0][1] }}
+        </div>
+    {% endif %}
+{% endwith %}
+
 <main class="container main-content">
-
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="alert-container">
-                {% for message in messages %}
-                    <div class="alert">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
     {% block content %}{% endblock %}
 </main>
 
@@ -56,7 +56,8 @@
     <p>&copy; 2026 Unified Applications Recommendation System</p>
 </footer>
 
-<!-- ✅ Place script at bottom -->
+{% block scripts %}{% endblock %}
+
 <script>
 function openModal(id) {
     const modal = document.getElementById("modal-" + id);
@@ -81,6 +82,38 @@ window.onclick = function(event) {
         }
     });
 };
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Reopen modal if needed
+    const params = new URLSearchParams(window.location.search);
+    const modalToOpen = params.get("open_modal");
+
+    if (modalToOpen) {
+        const modal = document.getElementById("modal-" + modalToOpen);
+        if (modal) {
+            modal.style.display = "block";
+        }
+    }
+
+    // Show toast popup
+    const toast = document.getElementById("toast");
+    if (toast) {
+        toast.classList.add("show");
+
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, 3000);
+
+        // Prevent toast from appearing again
+        setTimeout(() => {
+            toast.remove();
+        }, 3500);
+    }
+
+});
 </script>
 
 </body>

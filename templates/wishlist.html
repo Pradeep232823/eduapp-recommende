@@ -29,7 +29,7 @@
     <div class="modal-content">
 
         <span class="close"
-              onclick="closeModal('{{ app.app_id }}')">
+                onclick="closeModal('{{ app.app_id }}')">
             &times;
         </span>
 
@@ -58,21 +58,22 @@
         <!-- ACTION BUTTONS -->
         <section class="section-block action-buttons">
             <a href="{{ app.app_link }}"
-               target="_blank"
-               class="btn btn-primary">
+            target="_blank"
+            class="btn btn-primary">
                 Download App
             </a>
 
-            <form method="POST"
-                  action="{{ url_for('remove_from_wishlist') }}">
-                <input type="hidden"
-                       name="app_name"
-                       value="{{ app.app_name }}">
-                <button type="submit"
-                        class="btn btn-danger">
+            {% if role == "user" %}
+            <form method="POST" action="{{ url_for('remove_from_wishlist') }}">
+                <input type="hidden" name="app_name" value="{{ app.app_name }}">
+                <input type="hidden" name="app_id" value="{{ app.app_id }}">
+                <input type="hidden" name="next_page" value="{{ request.full_path }}">
+
+                <button type="submit" class="btn btn-danger">
                     Remove from Wishlist
                 </button>
             </form>
+            {% endif %}
         </section>
 
         <!-- PLAYSTORE REVIEWS -->
@@ -118,16 +119,16 @@
             {% endif %}
         </section>
 
+        <!-- REVIEW FORM -->
         {% if role == "user" %}
         <section class="section-block review-form-box">
             <h3>Give Your Review</h3>
 
-            <form method="POST"
-                  action="{{ url_for('add_review') }}">
+            <form method="POST" action="{{ url_for('add_review') }}">
 
-                <input type="hidden"
-                       name="app_name"
-                       value="{{ app.app_name }}">
+                <input type="hidden" name="app_name" value="{{ app.app_name }}">
+                <input type="hidden" name="app_id" value="{{ app.app_id }}">
+                <input type="hidden" name="next_page" value="{{ request.path }}">
 
                 <div class="form-group">
                     <label>Rating</label>
@@ -143,8 +144,8 @@
 
                 <div class="form-group">
                     <textarea name="review"
-                              placeholder="Write your review..."
-                              required></textarea>
+                                placeholder="Write your review..."
+                                required></textarea>
                 </div>
 
                 <button type="submit"
@@ -154,6 +155,7 @@
             </form>
         </section>
         {% endif %}
+
     </div>
 </div>
 {% endfor %}
@@ -162,4 +164,32 @@
 <p style="text-align:center;">No apps added to wishlist yet.</p>
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Reopen modal
+    const params = new URLSearchParams(window.location.search);
+    const modalToOpen = params.get("open_modal");
+
+    if (modalToOpen) {
+        const modal = document.getElementById("modal-" + modalToOpen);
+        if (modal) {
+            modal.style.display = "block";
+        }
+    }
+
+    // Show toast
+    const toast = document.getElementById("toast");
+    if (toast) {
+        toast.classList.add("show");
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, 3000);
+    }
+
+});
+</script>
 {% endblock %}

@@ -187,7 +187,8 @@ def get_user_activity():
 # ROUTES
 @app.route("/")
 def landing():
-    return render_template("login_choice.html")
+    logout_message = request.args.get("logout")
+    return render_template("login_choice.html", logout_message=logout_message)
 
 @app.route("/guest")
 def guest():
@@ -219,9 +220,10 @@ def login():
             session["user_id"] = user[0]
             session["username"] = username
             session["role"] = user[1]
+            flash("Login successful!", "success")
             return redirect(url_for("home"))
         else:
-            flash("Invalid credentials")
+            flash("Invalid credentials", "error")
 
     return render_template("login.html")
 
@@ -249,9 +251,10 @@ def admin_login():
             session["user_id"] = admin[0]
             session["username"] = username
             session["role"] = "admin"
+            flash("Login successful!", "success")
             return redirect(url_for("dashboard"))
         else:
-            flash("Invalid admin credentials")
+            flash("Invalid admin credentials", "error")
 
     return render_template("admin_login.html")
 
@@ -274,7 +277,7 @@ def register():
         conn.commit()
         conn.close()
 
-        flash("Registration successful")
+        flash("Registration successful", "success")
         return redirect(url_for("login"))
 
     return render_template("register.html")
@@ -330,33 +333,48 @@ def home():
     return render_template("index.html", apps=apps_list)
 
 # RECOMMEND
-@app.route("/recommend", methods=["GET", "POST"])
+@app.route("/recommend")
 def recommend():
 
     if not session.get("role"):
         return redirect(url_for("landing"))
 
+    selected_category = request.args.get("category")
     recommendations = []
-    selected_category = None
     categories = sorted(df_apps["category"].unique())
 
-    if request.method == "POST":
-        selected_category = request.form.get("category")
+    wishlist_set = set()
 
-        if selected_category:
-            filtered = df_apps[df_apps["category"] == selected_category].head(12)
+    # 🔥 Get wishlist if user
+    if session.get("role") == "user":
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT app_name FROM wishlist WHERE user_id=%s",
+            (session.get("user_id"),)
+        )
+        wishlist_items = cursor.fetchall()
+        conn.close()
 
-            for _, row in filtered.iterrows():
-                positive, negative = get_reviews_for_app(row["app_id"])
-                web_reviews = get_web_reviews(row["app_name"])
+        wishlist_set = {item[0] for item in wishlist_items}
 
-                app_dict = row.to_dict()
-                app_dict["description"] = clean_description(row["description"])
-                app_dict["positive_reviews"] = positive
-                app_dict["negative_reviews"] = negative
-                app_dict["web_reviews"] = web_reviews
+    if selected_category:
+        filtered = df_apps[df_apps["category"] == selected_category].head(12)
 
-                recommendations.append(app_dict)
+        for _, row in filtered.iterrows():
+            positive, negative = get_reviews_for_app(row["app_id"])
+            web_reviews = get_web_reviews(row["app_name"])
+
+            app_dict = row.to_dict()
+            app_dict["description"] = clean_description(row["description"])
+            app_dict["positive_reviews"] = positive
+            app_dict["negative_reviews"] = negative
+            app_dict["web_reviews"] = web_reviews
+
+            # 🔥 ADD THIS LINE
+            app_dict["in_wishlist"] = row["app_name"] in wishlist_set
+
+            recommendations.append(app_dict)
 
     return render_template(
         "recommend.html",
@@ -397,7 +415,7 @@ def dashboard():
             num_apps=df_apps.shape[0],
             avg_rating=round(df_apps["avg_rating"].mean(), 2),
             category_counts=df_apps["category"].value_counts().to_dict(),
-            rmse=rmse_value,
+            rmse=round(rmse_value,2),
             user_activity=user_activity,
             role=role
         )
@@ -460,13 +478,14 @@ def add_to_wishlist():
 
     user_id = session.get("user_id")
     app_name = request.form.get("app_name")
+    app_id = request.form.get("app_id")
+    next_page = request.form.get("next_page")
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # prevent duplicate
     cursor.execute(
-        "SELECT * FROM wishlist WHERE user_id=%s AND app_name=%s",
+        "SELECT 1 FROM wishlist WHERE user_id=%s AND app_name=%s",
         (user_id, app_name)
     )
 
@@ -477,11 +496,14 @@ def add_to_wishlist():
         )
         conn.commit()
         flash("Added to wishlist")
-    else:
-        flash("Already in wishlist")
 
     conn.close()
-    return redirect(url_for("home"))
+
+    if not next_page:
+        next_page = url_for("home")
+
+    separator = "&" if "?" in next_page else "?"
+    return redirect(f"{next_page}{separator}open_modal={app_id}")
 
 @app.route("/remove_from_wishlist", methods=["POST"])
 def remove_from_wishlist():
@@ -491,6 +513,8 @@ def remove_from_wishlist():
 
     user_id = session.get("user_id")
     app_name = request.form.get("app_name")
+    app_id = request.form.get("app_id")
+    next_page = request.form.get("next_page")
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -504,7 +528,12 @@ def remove_from_wishlist():
     conn.close()
 
     flash("Removed from wishlist")
-    return redirect(url_for("home"))
+
+    if not next_page:
+        next_page = url_for("home")
+
+    separator = "&" if "?" in next_page else "?"
+    return redirect(f"{next_page}{separator}open_modal={app_id}")
 
 # ADD REVIEW
 @app.route("/add_review", methods=["POST"])
@@ -515,9 +544,11 @@ def add_review():
 
     user_id = session.get("user_id")
     app_name = request.form.get("app_name")
+    app_id = request.form.get("app_id")
     rating = request.form.get("rating")
     review = request.form.get("review")
-
+    next_page = request.form.get("next_page")
+    
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -530,7 +561,12 @@ def add_review():
     conn.close()
 
     flash("Review submitted successfully")
-    return redirect(url_for("home"))
+    if not next_page:
+        next_page = url_for("home")
+
+    separator = "&" if "?" in next_page else "?"
+    return redirect(f"{next_page}{separator}open_modal={app_id}")
+    
 
 # REMOVE USER
 @app.route("/remove_user/<int:user_id>")
@@ -556,7 +592,10 @@ def remove_user(user_id):
 # LOGOUT
 @app.route("/logout")
 def logout():
-    session.clear()
+    session.pop("user_id", None)
+    session.pop("username", None)
+    session.pop("role", None)
+    flash("Logged out successfully!", "success")
     return redirect(url_for("landing"))
 
 if __name__ == "__main__":

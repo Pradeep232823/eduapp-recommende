@@ -18,10 +18,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 # Ensure models folder exists
 os.makedirs("models", exist_ok=True)
 
-
-# ==========================================================
 # CONTENT-BASED MODEL
-# ==========================================================
 def train_content_based(df_apps):
 
     print("Training Content-Based Model...")
@@ -43,10 +40,7 @@ def train_content_based(df_apps):
 
     print("Content-Based Model trained and saved.")
 
-
-# ==========================================================
 # COLLABORATIVE FILTERING (RMSE Optimized)
-# ==========================================================
 def train_collaborative_filtering(df_ratings):
 
     print("\nTraining Neural CF Model (RMSE Optimized)...")
@@ -165,10 +159,7 @@ def train_collaborative_filtering(df_ratings):
 
     print("Model trained, evaluated, and saved.")
 
-
-# ==========================================================
 # MAIN
-# ==========================================================
 if __name__ == "__main__":
 
     df_apps = pd.read_csv("apps.csv")

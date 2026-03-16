@@ -40,10 +40,12 @@ def inject_user():
 
 # DATABASE CONNECTION
 def get_db_connection():
-    return psycopg2.connect(
-        os.environ.get("DATABASE_URL"),
-        sslmode="require"
-    )
+    database_url = os.environ.get("DATABASE_URL")
+
+    if not database_url:
+        raise Exception("DATABASE_URL not set")
+
+    return psycopg2.connect(database_url)
 
 # HELPER FUNCTIONS
 def clean_description(text):
@@ -97,46 +99,60 @@ def get_content_recommendations(app_name=None, top_n=12):
 # COLLABORATIVE FILTERING
 def get_cf_recommendations(user_id, top_n=12):
 
-    if user_id not in user_encoder:
+    try:
+        # check if user exists in encoder
+        if user_id not in user_encoder.classes_:
+            return get_content_recommendations(top_n=top_n)
+
+        user_encoded = user_encoder.transform([user_id])[0]
+
+        encoded_apps = []
+        valid_app_ids = []
+
+        for app_id in df_apps["app_id"].unique():
+            if app_id in app_encoder:
+                encoded_apps.append(app_encoder[app_id])
+                valid_app_ids.append(app_id)
+
+        if len(encoded_apps) == 0:
+            return get_content_recommendations(top_n=top_n)
+
+        user_array = np.full(len(encoded_apps), user_encoded)
+        app_array = np.array(encoded_apps)
+
+        predictions = cf_model.predict(
+            [user_array, app_array],
+            verbose=0
+        ).flatten()
+
+        top_indices = np.argsort(predictions)[::-1][:top_n]
+        recommended_ids = [valid_app_ids[i] for i in top_indices]
+
+        return df_apps[df_apps["app_id"].isin(recommended_ids)]
+
+    except Exception as e:
+        print("CF ERROR:", e)
         return get_content_recommendations(top_n=top_n)
-
-    user_encoded = user_encoder[user_id]
-
-    encoded_apps = []
-    valid_app_ids = []
-
-    for app_id in df_apps["app_id"].unique():
-        if app_id in app_encoder:
-            encoded_apps.append(app_encoder[app_id])
-            valid_app_ids.append(app_id)
-
-    user_array = np.full(len(encoded_apps), user_encoded)
-    app_array = np.array(encoded_apps)
-
-    predictions = cf_model.predict(
-        [user_array, app_array],
-        verbose=0
-    ).flatten()
-
-    top_indices = np.argsort(predictions)[::-1][:top_n]
-    recommended_ids = [valid_app_ids[i] for i in top_indices]
-
-    return df_apps[df_apps["app_id"].isin(recommended_ids)]
 
 # HYBRID RECOMMENDATION
 def get_hybrid_recommendations(user_id, top_n=12):
 
-    cf_recs = get_cf_recommendations(user_id, top_n)
+    try:
+        cf_recs = get_cf_recommendations(user_id, top_n)
 
-    if not cf_recs.empty:
-        seed_app = cf_recs.iloc[0]["app_name"]
-        content_recs = get_content_recommendations(seed_app, top_n)
+        if not cf_recs.empty:
+            seed_app = cf_recs.iloc[0]["app_name"]
+            content_recs = get_content_recommendations(seed_app, top_n)
 
-        hybrid = pd.concat([cf_recs, content_recs])
-        hybrid = hybrid.drop_duplicates(subset=["app_id"])
-        return hybrid.head(top_n)
+            hybrid = pd.concat([cf_recs, content_recs])
+            hybrid = hybrid.drop_duplicates(subset=["app_id"])
+            return hybrid.head(top_n)
 
-    return get_content_recommendations(top_n=top_n)
+        return get_content_recommendations(top_n=top_n)
+
+    except Exception as e:
+        print("HYBRID ERROR:", e)
+        return get_content_recommendations(top_n=top_n)
 
 # ADMIN METRICS
 def calculate_rmse():
@@ -295,17 +311,19 @@ def home():
         return redirect(url_for("dashboard"))
 
     if role == "user":
-        apps = get_hybrid_recommendations(session["user_id"])
+        user_id = session.get("user_id")
 
-        # ✅ SORT HYBRID BY RATING (Highest first)
+        apps = get_hybrid_recommendations(user_id)
         apps = apps.sort_values(by="avg_rating", ascending=False)
 
         conn = get_db_connection()
         cursor = conn.cursor()
+
         cursor.execute(
             "SELECT app_name FROM wishlist WHERE user_id=%s",
-            (session["user_id"],)
+            (user_id,)
         )
+
         wishlist_items = cursor.fetchall()
         conn.close()
 
@@ -318,10 +336,16 @@ def home():
     apps_list = []
 
     for _, row in apps.iterrows():
+
         positive, negative = get_reviews_for_app(row["app_id"])
-        web_reviews = get_web_reviews(row["app_name"])
+
+        try:
+            web_reviews = get_web_reviews(row["app_name"])
+        except:
+            web_reviews = []
 
         app_dict = row.to_dict()
+
         app_dict["description"] = clean_description(row["description"])
         app_dict["positive_reviews"] = positive
         app_dict["negative_reviews"] = negative
@@ -599,4 +623,5 @@ def logout():
     return redirect(url_for("landing"))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
